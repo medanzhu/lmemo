@@ -13,8 +13,8 @@ uint32_t GetModuleFileNameA(
 ]]
 
 
-local iguard_path = "/home/git/stagingd/"
-local backup_path = "/home/git/backup"
+local iguard_path = "/home/danzhu/stagingd/"
+local backup_path = "/home/danzhu/backup"
 local alert_prefix = "alert-"
 local force_del = 1 
 
@@ -36,22 +36,10 @@ local function write_alert(site,server,action,local_filename,str)
         return nil
     end
     local now = os.date("%Y-%m-%d %H:%M:%S",os.time())
-    f:write(now .. ",warn,".. site .."," ..server .. "," .. action .. ",403,File " .. atoutf8(local_filename) .. atoutf8("发现可疑代码：")..str .."\n")
+    f:write(now .. ",warn,".. site .."," ..server .. "," .. action .. ",403,File " .. atoutf8(local_filename) .. atoutf8(str .."\n"))
     f:close()
 end
 
-local function copy_file(local_filename)
-    local pathname,filename = getPath(local_filename)
-    if ( is_winos() ) then
-        mkdir_win(backup_path .. pathname )
-        --print(local_filename.. " " .. backup_path .. pathname .. "\\" .. filename )
-        CopyFile(local_filename, backup_path .. pathname .. "\\" .. filename )
-    else
-        mkdir_unix(backup_path .. pathname )
-        --print(local_filename.." " .. backup_path .. pathname .. "/" .. filename )
-        CopyFile(local_filename, backup_path .. pathname .. "/" .. filename )
-    end
-end
 
 local function clear_file(local_filename)
 	if ffi.os == "Windows" then
@@ -59,11 +47,9 @@ local function clear_file(local_filename)
 	else 
 		cmd = "rm -f "
 	end
-	if ( force_del ) then
-		copy_file(local_filename)
-		print(cmd .. local_filename)
-		os.execute(cmd .. local_filename )		
-	end
+    copy_file(local_filename,backup_path)
+	print(cmd .. local_filename)
+	os.execute(cmd .. local_filename )		
 end 
 
 
@@ -75,8 +61,11 @@ function trigger(site,server,action,local_filename,remote_filename)
 		if (fn ~= nil) then
 			prompt = "Found suspicious code in " .. local_filename 
 			print(prompt)
-			write_alert(site,server,action,local_filename,str)
-			clear_file(local_filename)
+			write_alert(site,server,action,local_filename,"Found suspicios code : " .. str)
+		    if ( force_del ) then
+                clear_file(local_filename)
+			    write_alert(site,server,"DELETE",local_filename,"Try to backup and remove the suspicios file")
+            end
 		end
 	end
 end

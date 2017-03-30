@@ -33,7 +33,7 @@ function getPath(fullname)
 	return pathname,filename
 end
 
-function directory_exists( sPath )
+local function directory_exists( sPath )
   if type( sPath ) ~= "string" then return false end
   local response = os.execute( "cd " .. sPath )
   if response == 0 then
@@ -42,13 +42,25 @@ function directory_exists( sPath )
   return false
 end
 
-function mkdir_win(pathname) 
+local function mkdir_win(pathname) 
 	if (not directory_exists( pathname)) then 
 		os.execute("mkdir " .. pathname)
 	end
 end
 
-function mkdir_unix(pathname) 
+local function mkdir_unix(pathname) 
 	os.execute("mkdir -p " .. pathname)
 end
 
+function copy_file(local_filename,backup_path)
+    local pathname,filename = getPath(local_filename)
+    if ( is_winos() ) then
+         mkdir_win(backup_path .. pathname )
+         --print(local_filename.. " " .. backup_path .. pathname .. "\\" .. filename )
+         CopyFile(local_filename, backup_path .. pathname .. "\\" .. filename )
+    else
+         mkdir_unix(backup_path .. pathname )
+         --print(local_filename.." " .. backup_path .. pathname .. "/" .. filename )
+         CopyFile(local_filename, backup_path .. pathname .. "/" .. filename )
+    end
+end
